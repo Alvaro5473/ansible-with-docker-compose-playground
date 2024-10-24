@@ -102,9 +102,9 @@ Expansion of the recipe to generate a process that takes advantage of open ports
       dest: /tmp/hosts_ansible
       mode: '0644'
   
-  - name: Add the user 'bob'
+  - name: Add the user 'alvaro'
     ansible.builtin.user:
-      name: bob
+      name: alvaro
     become: yes
     become_method: sudo
   
