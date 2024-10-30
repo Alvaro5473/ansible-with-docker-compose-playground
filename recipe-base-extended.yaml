@@ -1,0 +1,63 @@
+---
+- name: Intro to Ansible Playbooks
+  hosts: all
+
+  tasks:
+  - name: Copy file hosts with permissions
+    ansible.builtin.copy:
+      src: /etc/ansible/hosts
+      dest: /tmp/hosts_ansible
+      mode: '0644'
+  
+  - name: Add the user 'alvaro'
+    ansible.builtin.user:
+      name: alvaro
+    become: yes
+    become_method: sudo
+  
+  - name: Upgrade all apt packages
+    apt:
+      force_apt_get: yes
+      upgrade: dist
+    become: yes
+
+  - name: Check for open ports
+    ansible.builtin.command: netstat -tuln | grep LISTEN
+    register: open_ports
+
+  - name: Display open ports
+    ansible.builtin.debug:
+      var: open_ports.stdout_lines
+
+  - name: Install nginx
+    ansible.builtin.apt:
+      name: nginx
+      state: present
+    become: yes
+
+  - name: Ensure nginx is running and enabled
+    ansible.builtin.systemd:
+      name: nginx
+      state: started
+      enabled: yes
+    become: yes
+
+  - name: Configure nginx to listen on specific open ports
+    ansible.builtin.template:
+      src: nginx.conf.j2
+      dest: /etc/nginx/sites-available/default
+    notify:
+      - Reload nginx
+
+  - name: Open port 80 and 443 in UFW
+    ansible.builtin.ufw:
+      rule: allow
+      name: 'Nginx Full'
+    become: yes
+
+  handlers:
+  - name: Reload nginx
+    ansible.builtin.systemd:
+      name: nginx
+      state: reloaded
+    become: yes
